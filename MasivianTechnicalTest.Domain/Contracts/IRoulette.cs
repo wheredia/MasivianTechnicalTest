@@ -15,7 +15,7 @@ namespace MasivianTechnicalTest.Domain.Contracts
 
         IResponse Close(Guid id);
 
-        IList<ExportModels.Roulette> GetAll();
+        IResponse GetAll();
 
     }
 }

@@ -18,39 +18,25 @@ namespace MasivianTechnicalTest.Domain.Implementations
             _client = client;
         }
 
-        public IResponse AddBet(Guid id, object bet)
-        {
-            throw new NotImplementedException();
-        }
-
-        public IResponse Close(Guid id)
-        {
-            throw new NotImplementedException();
-        }
-
         public IResponse Create()
         {
-            //throw new NotImplementedException();
             IResponse response;
             try
             {
-                var o = new ExportModels.Roulette
+                var roulette = new ExportModels.Roulette
                 {
                     id = Guid.NewGuid(),
                     status = ExportModels.Roulette.Status.create
                 };
-
-                _client.Set(o.id.ToString(), o.ToJson());
-
+                _client.Set(roulette.id.ToString(), roulette.ToJson());
                 response = new ExportModels.Response
                 {
                     Status = ExportModels.Response.ResponseStatus.ok,
                     Content = new ResumeResponseContent
                     {
-                        Content = o.id.ToString()
+                        Content = roulette.id.ToString()
                     }
                 };
-
             }
             catch (Exception e)
             {
@@ -63,52 +49,46 @@ namespace MasivianTechnicalTest.Domain.Implementations
                     }
                 };
             }
-
             return response;
-
         }
 
-        public IList<ExportModels.Roulette> GetAll()
+        public IResponse GetAll()
         {
             var response = new List<ExportModels.Roulette>();
             var dataResponse = _client.GetAll();
-
             foreach (var hash in dataResponse)
             {
                 var value = Newtonsoft.Json.JsonConvert.DeserializeObject<ExportModels.Roulette>(hash.Value);
                 response.Add(value);
             }
 
-            //response =
-
-            //return new ExportModels.Response
-            //{
-            //    Status = ExportModels.Response.ResponseStatus.ok,
-            //    Content = response
-            //};
-
-            return response;
+            return new Response
+            {
+                Status= Response.ResponseStatus.ok,
+                Content= response
+            };
         }
 
         public IResponse Open(Guid id)
-        {
-            var response = new Response
-            {
-                Status = Response.ResponseStatus.ok, 
-                Content = null 
-            };            
+        {            
             var rouletteJson = _client.Get(id.ToString());
+            if (rouletteJson == null)
+            {
+                return new Response
+                {
+                    Status = Response.ResponseStatus.fail,
+                    Content = new ResumeResponseContent { Content = string.Format("Ruleta {0} no se encuentra disponible!", id) }
+                };
+            }
             var rouletteObject = Newtonsoft.Json.JsonConvert.DeserializeObject<ExportModels.Roulette>(rouletteJson);
-
-            if (rouletteObject.status.Equals(ExportModels.Roulette.Status.create))
+            if (rouletteObject != null && rouletteObject.status.Equals(ExportModels.Roulette.Status.create))
             {
                 rouletteObject.status = ExportModels.Roulette.Status.open;
                 _client.Set(id.ToString(), rouletteObject.ToJson());
             }
-            else if (rouletteObject.status.Equals(ExportModels.Roulette.Status.open))
+            else if (rouletteObject != null && rouletteObject.status.Equals(ExportModels.Roulette.Status.open))
             {
-                //throw new Exception(string.Format("Ruleta {0} ya abierta!", id));
-                response = new Response
+                return new Response
                 {
                     Status = Response.ResponseStatus.fail,
                     Content = new ResumeResponseContent { Content = string.Format("Ruleta {0} ya abierta!", id) }
@@ -116,35 +96,43 @@ namespace MasivianTechnicalTest.Domain.Implementations
             }
             else
             {
-                //throw new Exception(string.Format("Ruleta {0} en estado no valido", id));
-                response = new Response
+                return new Response
                 {
-                    Status = Response.ResponseStatus.ok,
+                    Status = Response.ResponseStatus.fail,
                     Content = new ResumeResponseContent { Content = string.Format("Ruleta {0} en estado no valido", id) }
                 };
             }
-            return response;
+
+            return new Response
+            {
+                Status = Response.ResponseStatus.ok,
+                Content = new ResumeResponseContent { Content = string.Format("Ruleta {0} abierta exitosamente", id) }
+            };
         }
 
         public IResponse AddBet(Guid rouletteId, Bet bet)
         {
-            var response = new Response
-            {
-                Status = Response.ResponseStatus.ok,
-                Content = null
-            };
             var rouletteJson = _client.Get(rouletteId.ToString());
-            var rouletteObject = Newtonsoft.Json.JsonConvert.DeserializeObject<ExportModels.Roulette>(rouletteJson);
-            var validationResponse = ValidateBet(rouletteObject, bet);
-            if (validationResponse == null)
+            if (rouletteJson == null)
             {
-
+                return new Response
+                {
+                    Status = Response.ResponseStatus.fail,
+                    Content = new ResumeResponseContent { Content = string.Format("Ruleta {0} no se encuentra disponible!", rouletteId) }
+                };
+            }
+            var rouletteObject = Newtonsoft.Json.JsonConvert.DeserializeObject<ExportModels.Roulette>(rouletteJson);            
+            if (ValidateBet(rouletteObject, bet, out var validationResponse))
+            {
                 if (rouletteObject.bets == null)
                     rouletteObject.bets = new List<Bet>();
-
                 rouletteObject.bets.Add(bet);
                 _client.Set(rouletteObject.id.ToString(), rouletteObject.ToJson());
-                return response;
+                return new Response
+                {
+                    Status = Response.ResponseStatus.ok,
+                    Content = null
+                };
             }
             else
             {
@@ -152,104 +140,102 @@ namespace MasivianTechnicalTest.Domain.Implementations
             }
         }
 
-        private Response ValidateBet(ExportModels.Roulette roulette, Bet bet)
+        private bool ValidateBet(ExportModels.Roulette roulette, Bet bet, out Response response)
         {
             if (!roulette.status.Equals(ExportModels.Roulette.Status.open))
             {
-                return new Response
+                response =  new Response
                 {
                     Status = Response.ResponseStatus.fail,
-                    Content = new ResumeResponseContent { Content = string.Format("Ruleta {0} no esta en un estado valido para aceptar una apuesta.", roulette.id.ToString()) }
+                    Content = new ResumeResponseContent { Content = string.Format("Ruleta {0} no esta en un estado valido para aceptar una apuesta.", roulette.id.ToString()) }              
                 };
+                return false;
             }
 
             if (!(bet.Amount > 0 && bet.Amount <= 10000))
             {
-                return new Response
+                response =  new Response
                 {
                     Status = Response.ResponseStatus.fail,
                     Content = new ResumeResponseContent { Content = "El monto de la apuesta debe estar comprendido entre 1 y 10000 dollares." }
                 };
+                return false;
             }
 
             if (roulette.bets != null)
             {
                 if (roulette.bets.Where(b => b.ClientId.Equals(bet.ClientId)).Any())
                 {
-                    return new Response
+                    response = new Response
                     {
                         Status = Response.ResponseStatus.fail,
                         Content = new ResumeResponseContent { Content = string.Format("El cliente {0} tiene ya una apuesta en la Ruleta {1}.", bet.ClientId, roulette.id.ToString()) }
                     };
+                    return false;
                 }
                 if (bet.Type.Equals(Bet.BetType.num) && roulette.bets.Where(b => b.Num.Equals(bet.Num)).Any())
                 {
-                    return new Response
+                    response = new Response
                     {
                         Status = Response.ResponseStatus.fail,
                         Content = new ResumeResponseContent { Content = string.Format("El número fue ya seleccionado para la ruleta El monto de la apuesta debe estar comprendido entre 1 y 10000 dollares.", roulette.id.ToString()) }
                     };
+                    return false;
                 }
             }
-
-            return null;
+            response = new Response();
+            return true;
         }
 
         public IResponse Close(Guid id)
         {
-            var response = new Response
-            {
-                Status = Response.ResponseStatus.ok,
-                Content = null
-            };
             var rouletteJson = _client.Get(id.ToString());
+            if (rouletteJson == null)
+            {
+                return new Response
+                {
+                    Status = Response.ResponseStatus.fail,
+                    Content = new ResumeResponseContent { Content = string.Format("Ruleta {0} no se encuentra disponible!", id) }
+                };
+            }
             var rouletteObject = Newtonsoft.Json.JsonConvert.DeserializeObject<ExportModels.Roulette>(rouletteJson);
-            var validationResponse = ValidateRouletteClose(rouletteObject);
-
-            if (validationResponse.Status == Response.ResponseStatus.ok)
+            if (ValidateRouletteClose(rouletteObject, out var validationResponse))
             {
                 rouletteObject.status = ExportModels.Roulette.Status.close;
                 _client.Set(id.ToString(), rouletteObject.ToJson());
-                var winnerValue = SelectWinner(rouletteObject);
+                SelectWinner(rouletteObject, out var winnerValue);
                 _client.Set(id.ToString(), rouletteObject.ToJson());
-                response.Content = new { winnerValue = winnerValue, bets = rouletteObject.bets };
+                return new Response
+                {
+                    Status = Response.ResponseStatus.ok,
+                    Content = new { winnerValue = winnerValue, bets = rouletteObject.bets }
+                };
             }
             else
             {
-                response = new Response
-                {
-                    Status = Response.ResponseStatus.fail,
-                    Content = new ResumeResponseContent { Content = string.Format("Ruleta {0} en estado no valido", id) }
-                };
+                return validationResponse;
             }
-
-            return response;
         }
 
-        private Response ValidateRouletteClose(ExportModels.Roulette roulette)
-        {
-            var response = new Response
-            {
-                Status = Response.ResponseStatus.ok,
-                Content = null
-            };
-
+        private bool ValidateRouletteClose(ExportModels.Roulette roulette, out Response response)
+        {            
             if (roulette.status == ExportModels.Roulette.Status.close)
             {
-
                 response = new Response
                 {
                     Status = Response.ResponseStatus.fail,
                     Content = new ResumeResponseContent { Content = string.Format("Ruleta {0} en estado no valido", roulette.id) }
                 };
+                return false;
             }
-            return response;
+            response = new Response();
+            return true;
         }
 
-        private int SelectWinner(ExportModels.Roulette roulette)
+        private void SelectWinner(ExportModels.Roulette roulette, out int winnerValue)
         {
             var random = new Random();
-            var winnerValue = random.Next(0, 38);
+            winnerValue = random.Next(0, 38);
             foreach (var bet in roulette.bets)
             {
                 if (bet.Type.Equals(Bet.BetType.num) && bet.Num.Equals(winnerValue))
@@ -267,8 +253,6 @@ namespace MasivianTechnicalTest.Domain.Implementations
                     bet.Amount *= -1;
                 }
             }
-
-            return winnerValue;
         }
     }
 }

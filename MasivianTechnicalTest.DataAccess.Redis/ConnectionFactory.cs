@@ -5,8 +5,7 @@ namespace MasivianTechnicalTest.DataAccess.Redis
 {
     public class ConnectionFactory
     {
-        private static Lazy<ConnectionMultiplexer> Connection;
-        private readonly string REDIS_CONNECTIONSTRING = "REDIS_CONNECTIONSTRING";
+        private static Lazy<ConnectionMultiplexer> Connection;        
         static ConnectionFactory()
         {
             Connection = new Lazy<ConnectionMultiplexer>(() => ConnectionMultiplexer.Connect("192.168.176.1,6379"));
