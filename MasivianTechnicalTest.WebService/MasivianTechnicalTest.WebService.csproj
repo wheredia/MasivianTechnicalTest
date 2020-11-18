@@ -8,6 +8,13 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.10.9" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="5.6.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MasivianTechnicalTest.DataAccess.Redis\MasivianTechnicalTest.DataAccess.Redis.csproj" />
+    <ProjectReference Include="..\MasivianTechnicalTest.DataAccess\MasivianTechnicalTest.DataAccess.csproj" />
+    <ProjectReference Include="..\MasivianTechnicalTest.Domain\MasivianTechnicalTest.Domain.csproj" />
   </ItemGroup>
 
 </Project>
