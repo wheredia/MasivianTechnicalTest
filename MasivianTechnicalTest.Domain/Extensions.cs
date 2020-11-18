@@ -10,8 +10,7 @@ namespace MasivianTechnicalTest.Domain
         {           
             return Newtonsoft.Json.JsonConvert.SerializeObject(obj);
         }
-
-        public static bool IsEwen(this int value)
+                public static bool IsEwen(this int value)
         {
             return (value % 2 == 0);
         }

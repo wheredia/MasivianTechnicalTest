@@ -31,7 +31,7 @@ namespace MasivianTechnicalTest.Domain.Models.ViewModels
         }
 
         public void CopyTo(IRoulette[] array, int arrayIndex)
-        {
+    {
             throw new NotImplementedException();
         }
 

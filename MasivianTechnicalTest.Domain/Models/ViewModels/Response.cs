@@ -10,7 +10,6 @@ namespace MasivianTechnicalTest.Domain.Models.ViewModels
     {
         public enum ResponseStatus { ok, fail };
         public ResponseStatus Status { get; set; }
-        //public IResponseContent Content { get; set; }
         public Object Content { get; set; }
     }
 }

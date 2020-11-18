@@ -18,6 +18,16 @@ namespace MasivianTechnicalTest.Domain.Implementations
             _client = client;
         }
 
+        public IResponse AddBet(Guid id, object bet)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IResponse Close(Guid id)
+        {
+            throw new NotImplementedException();
+        }
+
         public IResponse Create()
         {
             //throw new NotImplementedException();
@@ -68,7 +78,15 @@ namespace MasivianTechnicalTest.Domain.Implementations
                 var value = Newtonsoft.Json.JsonConvert.DeserializeObject<ExportModels.Roulette>(hash.Value);
                 response.Add(value);
             }
-            
+
+            //response =
+
+            //return new ExportModels.Response
+            //{
+            //    Status = ExportModels.Response.ResponseStatus.ok,
+            //    Content = response
+            //};
+
             return response;
         }
 
@@ -76,9 +94,9 @@ namespace MasivianTechnicalTest.Domain.Implementations
         {
             var response = new Response
             {
-                Status = Response.ResponseStatus.ok,
-                Content = null
-            };
+                Status = Response.ResponseStatus.ok, 
+                Content = null 
+            };            
             var rouletteJson = _client.Get(id.ToString());
             var rouletteObject = Newtonsoft.Json.JsonConvert.DeserializeObject<ExportModels.Roulette>(rouletteJson);
 
@@ -89,6 +107,7 @@ namespace MasivianTechnicalTest.Domain.Implementations
             }
             else if (rouletteObject.status.Equals(ExportModels.Roulette.Status.open))
             {
+                //throw new Exception(string.Format("Ruleta {0} ya abierta!", id));
                 response = new Response
                 {
                     Status = Response.ResponseStatus.fail,
@@ -97,6 +116,7 @@ namespace MasivianTechnicalTest.Domain.Implementations
             }
             else
             {
+                //throw new Exception(string.Format("Ruleta {0} en estado no valido", id));
                 response = new Response
                 {
                     Status = Response.ResponseStatus.ok,

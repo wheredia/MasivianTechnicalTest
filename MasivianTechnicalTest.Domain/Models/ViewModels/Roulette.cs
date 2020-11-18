@@ -10,7 +10,6 @@ namespace MasivianTechnicalTest.Domain.Models.ViewModels
     {
         public enum Status { create, open, close }
         public Guid id { get; set; }
-        //public IEnumerable<Bet> bets { get; set; }
         public IList<Bet> bets { get; set; }
         public Status status { get; set; }
     }
